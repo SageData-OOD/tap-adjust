@@ -1,0 +1,19 @@
+version: 1
+send_anonymous_usage_stats: no
+project_id: tap-adjust
+plugins:
+  extractors:
+  - name: tap-adjust
+    namespace: tap_adjust
+    pip_url: -e .
+    capabilities:
+    - state
+    - catalog
+    - discover
+    settings:
+    - name: start_date
+      kind: date_iso8601
+    - name: end_date
+      kind: date_iso8601
+    - name: api_token
+      kind: password
