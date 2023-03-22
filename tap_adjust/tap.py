@@ -3,7 +3,6 @@
 from datetime import datetime
 from typing import List
 
-
 from singer_sdk import Stream, Tap
 from singer_sdk import typing as th
 
@@ -18,16 +17,19 @@ class TapAdjust(Tap):
     config_jsonschema = th.PropertiesList(
         th.Property("api_token", th.StringType, required=True),
         th.Property("additional_metrics", th.ArrayType(th.StringType), required=False),
-        th.Property("start_date", th.DateTimeType, required=True),
-        th.Property("end_date", th.DateTimeType,
-                    default=datetime.utcnow().date(), required=False),
+        th.Property("start_date", th.DateType, required=True),
+        th.Property(
+            "end_date",
+            th.DateType,
+            default=str(datetime.utcnow().date()),
+            required=False,
+        ),
     ).to_dict()
 
-    def discover_streams(self) -> List[Stream]:
+    def discover_streams(self: Tap) -> List[Stream]:
         """Return a list of discovered streams.
 
         Returns:
             List of stream instances.
         """
-
         return [ReportStream(tap=self)]

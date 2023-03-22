@@ -1,1 +1,1 @@
-"""Singer tap for the Criteo API."""
+"""Singer tap for the Adjust API."""

@@ -4,11 +4,8 @@
 
 # The spec and report schema are generated from this module.
 #
-# import source_adjust.model, yaml, json
-# yaml.dump(yaml.safe_load(source_adjust.model.Spec.schema_json()),
-#     stream=open('source_adjust/spec.yaml', 'w'),
-# )
 
+"""Adjust tap models."""
 
 import datetime
 import decimal
@@ -16,7 +13,6 @@ import json
 import typing
 
 import pydantic
-
 
 BASE_METRICS = typing.Literal[
     "network_cost",
@@ -113,7 +109,10 @@ DIMENSIONS = typing.Literal[
     "partner_id",
 ]
 
+
 class ReportModel(pydantic.BaseModel):
+    """Report model."""
+
     # Base metrics
     network_cost: typing.Optional[decimal.Decimal] = pydantic.Field(
         None,
@@ -562,9 +561,18 @@ class ReportModel(pydantic.BaseModel):
     )
 
     class Config:
+        """Pydantic config."""
+
         @staticmethod
-        def schema_extra(schema: typing.Dict[str, typing.Any]):
+        def schema_extra(schema: typing.Dict[str, typing.Any]) -> None:
+            """
+            Add extra schema information.
+
+            Args:
+                schema: Schema to add extra information to
+            """
             schema["$schema"] = "http://json-schema.org/draft-07/schema#"
 
+
 if __name__ == "__main__":
-    print(json.dumps(Report.schema_json(), indent=4))
+    print(json.dumps(ReportModel.schema_json(), indent=4))

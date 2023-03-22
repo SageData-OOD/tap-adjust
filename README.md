@@ -47,7 +47,7 @@ poetry install
 
 ### Create and Run Tests
 
-Create tests within the `tap_criteo/tests` subfolder and
+Create tests within the `tap_adjust/tests` subfolder and
   then run:
 
 ```bash

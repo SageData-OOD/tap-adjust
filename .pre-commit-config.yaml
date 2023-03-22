@@ -1,0 +1,48 @@
+ci:
+  autofix_prs: false
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: check-json
+    exclude: "\\.vscode/.*.json"
+  - id: check-toml
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+
+
+- repo: https://github.com/psf/black
+  rev: "23.1.0"
+  hooks:
+  - id: black
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.1.1
+  hooks:
+  - id: mypy
+    pass_filenames: true
+    additional_dependencies:
+    - types-requests
+    - types-python-dateutil
+
+- repo: https://github.com/pycqa/isort
+  rev: 5.12.0
+  hooks:
+  - id: isort
+    args: ["--profile", "black", "--filter-files"]
+
+- repo: https://github.com/pre-commit/mirrors-autopep8
+  rev: v2.0.2
+  hooks:
+  - id: autopep8
+
+- repo: https://github.com/pycqa/flake8
+  rev: 6.0.0
+  hooks:
+  - id: flake8
+    additional_dependencies:
+    - darglint
+    - flake8-annotations
+    - flake8-docstrings
