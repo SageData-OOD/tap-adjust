@@ -17,7 +17,7 @@ from .model import BASE_METRICS, DIMENSIONS, ReportModel
 
 
 class AdjustStream(RESTStream):
-    """Adjust report stream class."""
+    """Adjust REST stream class."""
 
     url_base = "https://dash.adjust.com"
 
