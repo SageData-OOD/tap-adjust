@@ -1,6 +1,7 @@
 """REST client handling, including AdjustStream base class."""
 from __future__ import annotations
 
+import decimal
 import json
 from datetime import date, datetime, timedelta
 from functools import cache
@@ -62,7 +63,7 @@ class DatePaginator(BaseAPIPaginator[datetime.date]):
         Returns:
             Boolean flag used to indicate if the endpoint has more pages.
         """
-        return self.current_value < self.end_date
+        return self.current_value <= min(self._end_value, datetime.now().date())
 
     def get_next(self: DatePaginator, response: Response) -> date | None:
         """Get the next pagination token or index from the API response.
@@ -74,7 +75,9 @@ class DatePaginator(BaseAPIPaginator[datetime.date]):
             The next page token or index. Return `None` from this method to indicate
                 the end of pagination.
         """
-        return self._start_value + timedelta(days=self.count())
+        next_date = self._start_value + timedelta(days=self.count)
+        # self.logger.info("Next Date to query: %s", next_date)
+        return next_date
 
 
 class ReportStream(AdjustStream):
@@ -95,6 +98,10 @@ class ReportStream(AdjustStream):
             tap: The tap instance.
         """
         super().__init__(tap=tap)
+
+        # self.dimensions is a set of strings that are the dimensions selected by the user
+        # self.metrics is a set of strings that are the metrics selected by the user
+        # these are computed in apply_catalog
 
         self.dimensions: List[str] = []
         self.metrics: List[str] = []
@@ -153,6 +160,8 @@ class ReportStream(AdjustStream):
         if currency:
             request_params["currency"] = currency
 
+        self.logger.info("Request params: %s", request_params)
+
         return request_params
 
     def apply_catalog(self: ReportStream, catalog: singer.Catalog) -> None:
@@ -171,6 +180,9 @@ class ReportStream(AdjustStream):
                 elif breadcrumb[-1] in get_args(BASE_METRICS):
                     self.metrics.append(breadcrumb[-1])
 
+        if "day" not in self.dimensions:
+            self.dimensions.append("day")
+
         # add custom metrics passed in config
         self.metrics += self.config.get("custom_metrics", [])
 
@@ -186,3 +198,34 @@ class ReportStream(AdjustStream):
         # another approach would be to compute a hash based on the selected dimensions
         # and use that as the primary key instead of the set of selected dimensions
         self._tap.mapper.register_raw_streams_from_catalog(catalog)
+
+    def _reshape(self: ReportStream, row: dict) -> dict | None:
+        model = ReportModel.__dict__["__fields__"]
+        row.pop("attr_dependency", None)
+        # Unfortunately all fields are returned as strings by the API
+        for k, v in list(row.items()):
+            if k in model:
+                type_ = model[k].type_
+            else:  # Additional user-provided metrics are assumed to be decimal
+                type_ = decimal.Decimal
+            if type_ in (int, decimal.Decimal):
+                try:
+                    row[k] = type_(v)
+                except TypeError:
+                    self.logger.warning(
+                        "Unable to convert field '%s': %s to %s, leaving '%s' as is", k, v, type_.__name__, k
+                    )
+
+        return row
+
+    def post_process(self: ReportStream, row: dict, context: dict | None = None) -> dict | None:
+        """Post process a row.
+
+        Args:
+            row: A row of data.
+            context: Stream partition or context dictionary.
+
+        Returns:
+            A row of data.
+        """
+        return self._reshape(row)

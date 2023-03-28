@@ -9,7 +9,6 @@
 
 import datetime
 import decimal
-import json
 import typing
 
 import pydantic
@@ -572,7 +571,3 @@ class ReportModel(pydantic.BaseModel):
                 schema: Schema to add extra information to
             """
             schema["$schema"] = "http://json-schema.org/draft-07/schema#"
-
-
-if __name__ == "__main__":
-    print(json.dumps(ReportModel.schema_json(), indent=4))
