@@ -63,7 +63,7 @@ class DatePaginator(BaseAPIPaginator[datetime.date]):
         Returns:
             Boolean flag used to indicate if the endpoint has more pages.
         """
-        return self.current_value <= min(self._end_value, datetime.now().date())
+        return self.current_value <= min(self._end_value, datetime.utcnow().date())
 
     def get_next(self: DatePaginator, response: Response) -> date | None:
         """Get the next pagination token or index from the API response.
