@@ -199,7 +199,7 @@ class ReportStream(AdjustStream):
             self.dimensions.append("day")
 
         # # add custom metrics passed in config
-        # self.metrics += self.config.get("additional_metrics", [])
+        self.metrics = list(set(self.metrics + self.config["additional_metrics"]))
 
         catalog_entry.key_properties = self.dimensions
         catalog_entry.metadata.root.table_key_properties = catalog_entry.key_properties
