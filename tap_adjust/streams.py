@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import decimal
-import json
 from datetime import date, datetime, timedelta
 from functools import cache
 from typing import Any, List, get_args
+from urllib.parse import urlparse
 
 import singer_sdk._singerlib as singer
 from requests import Response
@@ -63,6 +63,7 @@ class DatePaginator(BaseAPIPaginator[datetime.date]):
         Returns:
             Boolean flag used to indicate if the endpoint has more pages.
         """
+        # return False
         return self.current_value < min(self._end_value, datetime.utcnow().date())
 
     def get_next(self: DatePaginator, response: Response) -> date | None:
@@ -85,7 +86,6 @@ class ReportStream(AdjustStream):
 
     name = "report"
     records_jsonpath = "$.rows[*]"
-    schema = json.loads(ReportModel.schema_json())
     path = "/control-center/reports-service/report"
     replication_key = "day"
     replication_method = "INCREMENTAL"
@@ -105,6 +105,21 @@ class ReportStream(AdjustStream):
 
         self.dimensions: List[str] = []
         self.metrics: List[str] = []
+
+    @property
+    def schema(self: ReportStream) -> dict:
+        """Get schema.
+
+        Returns:
+            JSON Schema dictionary for this stream.
+        """
+        schema = ReportModel.schema()
+        properties = schema["properties"]
+
+        for attr in self.config["additional_metrics"]:
+            properties[attr] = {"type": "number"}
+
+        return schema
 
     def get_new_paginator(self: ReportStream) -> BaseAPIPaginator:
         """Get a fresh paginator for this API endpoint.
@@ -183,14 +198,14 @@ class ReportStream(AdjustStream):
         if "day" not in self.dimensions:
             self.dimensions.append("day")
 
-        # add custom metrics passed in config
-        self.metrics += self.config.get("custom_metrics", [])
+        # # add custom metrics passed in config
+        # self.metrics += self.config.get("additional_metrics", [])
 
         catalog_entry.key_properties = self.dimensions
         catalog_entry.metadata.root.table_key_properties = catalog_entry.key_properties
 
-        self.logger.info("Computed DIMENSIONS: %s", self.dimensions)
-        self.logger.info("Computed METRICS: %s", self.metrics)
+        self.logger.info("Selected dimensions: %s", self.dimensions)
+        self.logger.info("Selected metrics: %s", self.metrics)
 
         super().apply_catalog(catalog)
 
@@ -229,3 +244,22 @@ class ReportStream(AdjustStream):
             A row of data.
         """
         return self._reshape(row)
+
+    def response_error_message(self: ReportStream, response: Response) -> str:
+        """Build error message for invalid http statuses.
+
+        WARNING - Override this method when the URL path may contain secrets or PII
+
+        Args:
+            response: A `requests.Response`_ object.
+
+        Returns:
+            str: The error message
+        """
+        full_path = urlparse(response.url).path or self.path
+        if 400 <= response.status_code < 500:
+            error_type = "Client"
+        else:
+            error_type = "Server"
+
+        return f"{response.status_code} {error_type} Error: " f"{response.text} for path: {full_path}"
