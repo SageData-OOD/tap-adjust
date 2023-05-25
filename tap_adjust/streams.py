@@ -168,6 +168,8 @@ class ReportStream(AdjustStream):
             "date_period": f"{next_page_token}:{next_page_token}",
             "dimensions": ",".join(self.dimensions),
             "metrics": ",".join(self.metrics),
+            "attribution_type": self.config.get("attribution_type", "click"),
+            "attribution_source": self.config.get("attribution_source", "dynamic"),
         }
 
         currency = self.config.get("currency")

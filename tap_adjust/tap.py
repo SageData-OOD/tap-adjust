@@ -17,6 +17,8 @@ class TapAdjust(Tap):
     config_jsonschema = th.PropertiesList(
         th.Property("api_token", th.StringType, required=True),
         th.Property("additional_metrics", th.ArrayType(th.StringType), required=False),
+        th.Property("attribution_type", th.StringType, required=True),
+        th.Property("attribution_source", th.StringType, required=True),
         th.Property("start_date", th.DateType, required=True),
         th.Property(
             "end_date",
