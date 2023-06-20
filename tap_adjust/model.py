@@ -98,6 +98,7 @@ DIMENSIONS = typing.Literal[
     "adgroup_id_network",
     "source_network",
     "source_id_network",
+    "channel",
     "creative",
     "creative_network",
     "creative_id_network",
@@ -517,6 +518,11 @@ class ReportModel(pydantic.BaseModel):
     source_id_network: typing.Optional[str] = pydantic.Field(
         None,
         description="Value for source_app.",
+    )
+
+    channel: typing.Optional[str] = pydantic.Field(
+        None,
+        description=("A combination of partner_nameand network."),
     )
 
     creative: typing.Optional[str] = pydantic.Field(
